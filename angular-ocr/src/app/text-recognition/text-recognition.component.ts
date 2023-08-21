@@ -13,7 +13,7 @@ export class TextRecognitionComponent {
   imagePath: string = '';
   lines: string[] = [];
   tempText: string[] = [];
-  recognizedText: { text: string, bbox: any, staticX0?: number}[] = [];
+  recognizedText: { text: string, bbox: any, words: any}[] = [];
   @ViewChild('imgElement') imgElement: ElementRef<HTMLImageElement> | undefined;
   @ViewChild('canvasElement') canvasElement: ElementRef<HTMLCanvasElement> | undefined;
   canvasContext: CanvasRenderingContext2D | undefined;
@@ -49,10 +49,11 @@ lastMouseY: number | null = null;
         this.tempText = res.data.text.split('\n');
         const totalLines = this.tempText.length;
         this.lines = Array(totalLines - 1).fill('');
-        this.recognizedText = res.data.lines.map((line: { text: any; bbox: any; startIdx: number}) => ({
+        this.recognizedText = res.data.lines.map((line: { text: any; bbox: any; words:any}) => ({
 
           text: line.text,
-          bbox: line.bbox
+          bbox: line.bbox,
+          words: line.words
       }));
       console.log(this.recognizedText);
       }).catch(console.error);
@@ -81,6 +82,7 @@ highlightText(index: number) {
       return;
   }
   for (let i = 0; i < this.lines.length; i++) {
+
       const inputText = this.lines[i];
 
       const recognizedLine = this.recognizedText[i]?.text;
@@ -88,22 +90,79 @@ highlightText(index: number) {
       if (recognizedLine && inputText && recognizedLine.includes(inputText)) {
           this.canvasContext.strokeStyle = 'red';
           this.canvasContext.lineWidth = 3;
+          const words = this.recognizedText[i].words;
+          let elemenst:any[] = [];
 
-          const bbox = this.recognizedText[i].bbox;
-          const averageCharWidth =((bbox.x1 - bbox.x0) / recognizedLine.length);
+          words.forEach((element:any) => {
+            if(inputText.includes(element['text'])){
 
-          // Calculate the start position of the input text within the recognized line
-          const startIdx = recognizedLine.indexOf(inputText);
+              let obj = {
+                text: element['text'],
+                bbox: element['bbox']
+              }
+               elemenst.push(obj);
+            }
+          });
+          let fontSize = words[0].font_size;
+          const bbox = this.recognizedText[i].bbox ;
           // Check if staticX0 exists for this line. If it does, use it.
-          let x0 =  bbox.x0 + averageCharWidth * startIdx;
+          let x0 =  elemenst[0].bbox.x0;
 
           const y0 = bbox.y0;
-          const x1 = x0 + averageCharWidth * inputText.length;
-          const y1 = bbox.y1;
 
-          this.canvasContext.strokeRect(x0, y0, x1 - x0 , y1 - y0);
+          const x1 = elemenst[elemenst.length -1].bbox.x1 - x0;
+          bbox.x1 = x1;
+          const y1 = bbox.y1;
+          this.canvasContext.font = words[0].font_size;
+          this.canvasContext.strokeRect(x0, y0, x1 , y1 - y0);
       }
+
+    }
+}
+resizeBorderHandler(index: number) {
+  this.clearCanvas();
+
+  if (!this.canvasContext) {
+      return;
   }
+  if (!this.canvasElement) {
+      return;
+  }
+  for (let i = 0; i < this.lines.length; i++) {
+
+    const inputText = this.lines[i];
+
+    const recognizedLine = this.recognizedText[i]?.text;
+
+    if (recognizedLine && inputText && recognizedLine.includes(inputText)) {
+        this.canvasContext.strokeStyle = 'red';
+        this.canvasContext.lineWidth = 3;
+        const words = this.recognizedText[i].words;
+        let elemenst:any[] = [];
+        words.forEach((element:any) => {
+          if(inputText.includes(element['text'])){
+
+            let obj = {
+              text: element['text'],
+              bbox: element['bbox'],
+              symbols: element['symbols']
+            }
+             elemenst.push(obj);
+          }
+        });
+
+        const bbox = this.recognizedText[i].bbox;
+        // Check if staticX0 exists for this line. If it does, use it.
+        let x0 =  elemenst[0].bbox.x0;
+
+        const y0 = bbox.y0;
+        const x1 = bbox.x1;
+        const y1 = bbox.y1;
+        this.canvasContext.font = words[0].font_size;
+        this.canvasContext.strokeRect(x0, y0, x1 , y1 - y0);
+      }
+
+    }
 }
 
 
@@ -154,7 +213,7 @@ clearCanvas() {
     const oldX1 = bbox.x1;
 
     bbox.x1 += dx;
-    bbox.y1 += dy;
+
     this.lastMousePosition = { x: mouseX, y: mouseY };
 
     // Request the browser to perform an animation update
@@ -162,9 +221,8 @@ clearCanvas() {
         if (this.canvasContext) {
             // Clear the previously drawn region
             this.canvasContext.clearRect(oldX1 - 1, bbox.y0 - 1, (bbox.x1 - oldX1) + 2, bbox.y1 - bbox.y0 + 2);
-
             // Draw the updated region
-          this.highlightText(this.resizeTargetIndex!);
+            this.resizeBorderHandler(this.resizeTargetIndex!);
         }
     });
 }
