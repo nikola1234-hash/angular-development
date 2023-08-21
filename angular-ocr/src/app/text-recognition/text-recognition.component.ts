@@ -95,10 +95,8 @@ highlightText(index: number) {
           // Calculate the start position of the input text within the recognized line
           const startIdx = recognizedLine.indexOf(inputText);
           // Check if staticX0 exists for this line. If it does, use it.
-          let x0 = this.xIndexStore[i+inputText] ?? bbox.x0 + averageCharWidth * startIdx;
-          if(!this.xIndexStore[i+inputText]  && recognizedLine.includes(inputText)){
-            this.xIndexStore[i+inputText] = x0;
-          }
+          let x0 =  bbox.x0 + averageCharWidth * startIdx;
+
           const y0 = bbox.y0;
           const x1 = x0 + averageCharWidth * inputText.length;
           const y1 = bbox.y1;
