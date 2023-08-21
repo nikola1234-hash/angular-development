@@ -17,7 +17,7 @@ export class TextRecognitionComponent {
   @ViewChild('imgElement') imgElement: ElementRef<HTMLImageElement> | undefined;
   @ViewChild('canvasElement') canvasElement: ElementRef<HTMLCanvasElement> | undefined;
   canvasContext: CanvasRenderingContext2D | undefined;
-
+  currentSize:number = 0;
   xIndexStore: number [] = [];
 
   resizing: boolean = false;
@@ -71,7 +71,7 @@ onImageLoad(event: any) {
   canvas.height = event.target.height;
   this.canvasContext = canvas.getContext('2d') ?? undefined;
 }
-highlightText(index: number) {
+highlightText(index: number, isResize:boolean = false) {
   this.clearCanvas();
 
   if (!this.canvasContext) {
@@ -90,26 +90,61 @@ highlightText(index: number) {
           this.canvasContext.lineWidth = 3;
 
           const bbox = this.recognizedText[i].bbox;
-          const averageCharWidth = (bbox.x1 - bbox.x0) / recognizedLine.length;
+          const averageCharWidth =((bbox.x1 - bbox.x0) / recognizedLine.length);
 
           // Calculate the start position of the input text within the recognized line
           const startIdx = recognizedLine.indexOf(inputText);
           // Check if staticX0 exists for this line. If it does, use it.
-          let x0 = this.recognizedText[i].staticX0 ?? (bbox.x0 + averageCharWidth * startIdx);
-
-          // If staticX0 hasn't been set yet, set it now
-          if (!this.recognizedText[i].staticX0) {
-              this.recognizedText[i].staticX0 = x0;
+          let x0 = this.xIndexStore[i] ?? bbox.x0 + averageCharWidth * startIdx;
+          if(!this.xIndexStore[i]){
+            this.xIndexStore[i] = x0;
           }
 
           const y0 = bbox.y0;
           const x1 = x0 + averageCharWidth * inputText.length;
           const y1 = bbox.y1;
 
-          this.canvasContext.strokeRect(x0, y0, x1 - x0, y1 - y0);
+          this.canvasContext.strokeRect(x0, y0, x1 - x0 , y1 - y0);
       }
   }
 }
+
+highlightTexthandle(index: number) {
+  this.clearCanvas();
+
+  if (!this.canvasContext) {
+      return;
+  }
+  if (!this.canvasElement) {
+      return;
+  }
+  for (let i = 0; i < this.lines.length; i++) {
+      const inputText = this.lines[i];
+
+      const recognizedLine = this.recognizedText[i]?.text;
+
+      if (recognizedLine && inputText && recognizedLine.includes(inputText)) {
+          this.canvasContext.strokeStyle = 'red';
+          this.canvasContext.lineWidth = 3;
+
+          const bbox = this.recognizedText[i].bbox;
+          const averageCharWidth =((bbox.x1 - bbox.x0) / recognizedLine.length);
+
+          // Calculate the start position of the input text within the recognized line
+          const startIdx = recognizedLine.indexOf(inputText);
+          // Check if staticX0 exists for this line. If it does, use it.
+          let x0 = bbox.x0 + averageCharWidth * startIdx;
+
+
+          const y0 = bbox.y0;
+          const x1 = x0 + averageCharWidth * inputText.length;
+          const y1 = bbox.y1;
+
+          this.canvasContext.strokeRect(x0, y0, x1 - x0 , y1 - y0);
+      }
+  }
+}
+
 
 clearCanvas() {
   if(!this.canvasContext){
@@ -146,7 +181,7 @@ clearCanvas() {
     const mouseY = event.offsetY;
 
     const dx = mouseX - this.lastMousePosition.x;
-
+    const dy = mouseY - this.lastMousePosition.y;
     // Adjust the bbox using dx only (keep y the same)
     const bbox = this.recognizedText[this.resizeTargetIndex].bbox;
 
@@ -154,7 +189,7 @@ clearCanvas() {
     const oldX1 = bbox.x1;
 
     bbox.x1 += dx;
-
+    bbox.y1 += dy;
     this.lastMousePosition = { x: mouseX, y: mouseY };
 
     // Request the browser to perform an animation update
@@ -162,8 +197,9 @@ clearCanvas() {
         if (this.canvasContext) {
             // Clear the previously drawn region
             this.canvasContext.clearRect(oldX1 - 1, bbox.y0 - 1, (bbox.x1 - oldX1) + 2, bbox.y1 - bbox.y0 + 2);
+
             // Draw the updated region
-            this.highlightText(this.resizeTargetIndex!);
+          this.highlightText(this.resizeTargetIndex!, true);
         }
     });
 }
