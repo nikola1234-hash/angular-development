@@ -106,6 +106,9 @@ highlightText(index: number) {
           let fontSize = words[0].font_size;
           const bbox = this.recognizedText[i].bbox ;
           // Check if staticX0 exists for this line. If it does, use it.
+          if(!elemenst[0]){
+            return;
+          }
           let x0 =  elemenst[0].bbox.x0;
 
           const y0 = bbox.y0;
