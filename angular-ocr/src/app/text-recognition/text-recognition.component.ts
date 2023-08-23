@@ -21,7 +21,7 @@ export class TextRecognitionComponent {
   resizing: boolean = false;
   lastMousePosition: { x: number, y: number } | null = null;
   resizeTargetIndex: number | null = null;
-
+  bboxX1:Record<string, any>[] = [];
   ngOnInit(): void {
   }
    // On file Select
@@ -114,9 +114,14 @@ highlightText(index: number) {
 
           const y0 = bbox.y0;
           bbox.x0 = x0;
-          const x1 = elemenst[elemenst.length -1].bbox.x1;
+          let x1;
+          if(this.bboxX1[i]){
+            x1 = this.bboxX1[i];
+          }
+          else{
+           x1 = elemenst[elemenst.length -1].bbox.x1;
+          }
           bbox.x1 = x1;
-          console.log(elemenst[elemenst.length -1]);
           const y1 = bbox.y1;
           this.canvasContext.font = this.fontSize + 'px Arial';
           this.canvasContext.strokeRect(x0, y0, x1 -x0 , y1 - y0);
@@ -145,7 +150,7 @@ resizeBorderHandler(index: number, clearing : any) {
         const bbox = this.recognizedText[i].bbox;
    
         let x0 =  bbox.x0;
-
+        this.bboxX1[i] = bbox.x1;
         const y0 = bbox.y0;
         const x1 = bbox.x1;
         const y1 = bbox.y1;
