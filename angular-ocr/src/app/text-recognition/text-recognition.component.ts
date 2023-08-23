@@ -108,7 +108,7 @@ highlightText(index: number) {
           const bbox = this.recognizedText[i].bbox;
           // Check if staticX0 exists for this line. If it does, use it.
           if(!elemenst[0]){
-            return;
+            break;
           }
           let x0 =  elemenst[0].bbox.x0;
 
