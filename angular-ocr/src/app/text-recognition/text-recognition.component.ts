@@ -12,19 +12,16 @@ export class TextRecognitionComponent {
   image?: File | null; // Variable to store file
   imagePath: string = '';
   lines: string[] = [];
-  tempText: string[] = [];
   recognizedText: { text: string, bbox: any, words: any}[] = [];
   @ViewChild('imgElement') imgElement: ElementRef<HTMLImageElement> | undefined;
   @ViewChild('canvasElement') canvasElement: ElementRef<HTMLCanvasElement> | undefined;
   canvasContext: CanvasRenderingContext2D | undefined;
   currentSize:number = 0;
-  xIndexStore: Record<string, number> = {};
-
+  fontSize:number = 0;
   resizing: boolean = false;
   lastMousePosition: { x: number, y: number } | null = null;
   resizeTargetIndex: number | null = null;
-lastMouseX: number | null = null;
-lastMouseY: number | null = null;
+
   ngOnInit(): void {
   }
    // On file Select
@@ -46,9 +43,9 @@ lastMouseY: number | null = null;
     if(this.image){
       Tesseract.recognize(this.image).then((res:any) =>{
         console.log(res);
-        this.tempText = res.data.text.split('\n');
-        const totalLines = this.tempText.length;
-        this.lines = Array(totalLines - 1).fill('');
+        
+        const totalLines = res.data.lines.length;
+        this.lines = Array(totalLines).fill('');
         this.recognizedText = res.data.lines.map((line: { text: any; bbox: any; words:any}) => ({
 
           text: line.text,
@@ -92,19 +89,23 @@ highlightText(index: number) {
           this.canvasContext.lineWidth = 3;
           const words = this.recognizedText[i].words;
           let elemenst:any[] = [];
-
+          let splittedInput = inputText.split(' ');
           words.forEach((element:any) => {
-            if(inputText.includes(element['text'])){
 
-              let obj = {
-                text: element['text'],
-                bbox: element['bbox']
+            splittedInput.forEach((input:any) => {
+              if(input == element['text']){
+
+                let obj = {
+                  text: element['text'],
+                  bbox: element['bbox']
+                }
+                 elemenst.push(obj);
               }
-               elemenst.push(obj);
-            }
+            });
+          
           });
-          let fontSize = words[0].font_size;
-          const bbox = this.recognizedText[i].bbox ;
+          this.fontSize = words[0].font_size;
+          const bbox = this.recognizedText[i].bbox;
           // Check if staticX0 exists for this line. If it does, use it.
           if(!elemenst[0]){
             return;
@@ -112,18 +113,18 @@ highlightText(index: number) {
           let x0 =  elemenst[0].bbox.x0;
 
           const y0 = bbox.y0;
-
-          const x1 = elemenst[elemenst.length -1].bbox.x1 - x0;
+          bbox.x0 = x0;
+          const x1 = elemenst[elemenst.length -1].bbox.x1;
           bbox.x1 = x1;
+          console.log(elemenst[elemenst.length -1]);
           const y1 = bbox.y1;
-          this.canvasContext.font = words[0].font_size;
-          this.canvasContext.strokeRect(x0, y0, x1 , y1 - y0);
+          this.canvasContext.font = this.fontSize + 'px Arial';
+          this.canvasContext.strokeRect(x0, y0, x1 -x0 , y1 - y0);
       }
 
     }
 }
-resizeBorderHandler(index: number) {
-  this.clearCanvas();
+resizeBorderHandler(index: number, clearing : any) {
 
   if (!this.canvasContext) {
       return;
@@ -131,48 +132,30 @@ resizeBorderHandler(index: number) {
   if (!this.canvasElement) {
       return;
   }
+  this.clearCanvas();
   for (let i = 0; i < this.lines.length; i++) {
 
     const inputText = this.lines[i];
 
     const recognizedLine = this.recognizedText[i]?.text;
-
     if (recognizedLine && inputText && recognizedLine.includes(inputText)) {
         this.canvasContext.strokeStyle = 'red';
         this.canvasContext.lineWidth = 3;
-        const words = this.recognizedText[i].words;
-        let elemenst:any[] = [];
-        words.forEach((element:any) => {
-          if(inputText.includes(element['text'])){
-
-            let obj = {
-              text: element['text'],
-              bbox: element['bbox'],
-              symbols: element['symbols']
-            }
-             elemenst.push(obj);
-          }
-        });
-
+       
         const bbox = this.recognizedText[i].bbox;
-        // Check if staticX0 exists for this line. If it does, use it.
-        let x0 =  elemenst[0].bbox.x0;
+   
+        let x0 =  bbox.x0;
 
         const y0 = bbox.y0;
         const x1 = bbox.x1;
         const y1 = bbox.y1;
-        this.canvasContext.font = words[0].font_size;
-        this.canvasContext.strokeRect(x0, y0, x1 , y1 - y0);
+        
+
+        this.canvasContext.strokeRect(x0, y0, x1 -x0 , y1 - y0);
       }
-
     }
-}
-
-
-
-
-
-
+  }
+   
 clearCanvas() {
   if(!this.canvasContext){
     return;
@@ -182,9 +165,7 @@ clearCanvas() {
   }
   this.canvasContext.clearRect(0, 0, this.canvasElement.nativeElement.width, this.canvasElement.nativeElement.height);
 }
-  createInputs(res:any){
 
-  }
 
   onMouseDown(event: MouseEvent) {
     const mouseX = event.offsetX;
@@ -201,7 +182,7 @@ clearCanvas() {
         }
     }
   }
- onMouseMove(event: MouseEvent) {
+  onMouseMove(event: MouseEvent) {
     if (!this.resizing || !this.lastMousePosition || this.resizeTargetIndex === null) return;
 
     const mouseX = event.offsetX;
@@ -223,9 +204,12 @@ clearCanvas() {
     requestAnimationFrame(() => {
         if (this.canvasContext) {
             // Clear the previously drawn region
-            this.canvasContext.clearRect(oldX1 - 1, bbox.y0 - 1, (bbox.x1 - oldX1) + 2, bbox.y1 - bbox.y0 + 2);
+            let clearing = {x: Math.min(oldX1, bbox.x1) - 1, y: bbox.y0 - 1, width: Math.abs(bbox.x1 - oldX1) + 2, height: bbox.y1 - bbox.y0 + 2};
+            
+            this.canvasContext.clearRect(clearing.x, clearing.y, clearing.width, clearing.height);
+
             // Draw the updated region
-            this.resizeBorderHandler(this.resizeTargetIndex!);
+            this.resizeBorderHandler(this.resizeTargetIndex!, clearing);
         }
     });
 }

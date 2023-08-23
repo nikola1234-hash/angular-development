@@ -1,24 +1,30 @@
-<div class="col-8">
-      <div class="text-center">
-        <input class="form-control" type="file"
-                (change)="onChange($event)">
+<div class="container mt-4">
+    <div class="row">
+      <div class="col-sm">
+        <div class="text-center">
+          <input class="form-control" type="file"
+                  (change)="onChange($event)">
+        </div>
+        <div style="position: relative;">
+          <img class="img-thumbnail" #imgElement [src]="imagePath" (load)="onImageLoad($event)">
+          <canvas #canvasElement
+          (mousedown)="onMouseDown($event)"
+          (mousemove)="onMouseMove($event)"
+          (mouseup)="onMouseUp($event)"
+          (mouseleave)="onMouseLeave($event)"
+          appMouseResponse></canvas>
+        </div>
+  </div>
+  <div class="col-sm">
+    <!-- Shareable short link of  uploaded file -->
+      <div class="mt-4" *ngFor="let line of lines; let i = index; trackBy: trackByFn">
+        <label>Row {{ i + 1 }}</label>
+        <input [(ngModel)]="lines[i]" class="form-control" (keyup)="highlightText(i)" />
       </div>
-      <div style="position: relative;">
-        <img class="img-thumbnail" #imgElement [src]="imagePath" (load)="onImageLoad($event)">
-        <canvas #canvasElement style="position: absolute; top: 0; left: 0;"
-        (mousedown)="onMouseDown($event)"
-        (mousemove)="onMouseMove($event)"
-        (mouseup)="onMouseUp($event)"
-        (mouseleave)="onMouseLeave($event)"></canvas>
-      </div>
-</div>
-<div class="col-4">
-  <!-- Shareable short link of  uploaded file -->
-    <div *ngFor="let line of lines; let i = index; trackBy: trackByFn">
-      <label>Row {{ i + 1 }}</label>
-      <input [(ngModel)]="lines[i]" class="form-control" (keyup)="highlightText(i)" />
+  </div>
     </div>
 </div>
+
 <hr/>
 
 

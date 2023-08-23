@@ -4,10 +4,12 @@ import {NgbModule} from '@ng-bootstrap/ng-bootstrap';
 import { AppComponent } from './app.component';
 import { TextRecognitionComponent } from './text-recognition/text-recognition.component';
 import { FormsModule } from '@angular/forms';
+import { MouseResponseDirective } from './mouse-response.directive';
 @NgModule({
   declarations: [
     AppComponent,
-    TextRecognitionComponent
+    TextRecognitionComponent,
+    MouseResponseDirective
   ],
   imports: [
     BrowserModule,
