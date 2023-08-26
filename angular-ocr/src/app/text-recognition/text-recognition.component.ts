@@ -8,8 +8,7 @@ import * as Tesseract from 'tesseract.js';
 })
 
 export class TextRecognitionComponent {
-  shortLink: string = "";
-  loading: boolean = false; // Flag variable
+ 
   image?: File | null; // Variable to store file
   imagePath: string = '';
   lines: string[] = [];
@@ -23,7 +22,6 @@ export class TextRecognitionComponent {
   lastMousePosition: { x: number, y: number } | null = null;
   resizeTargetIndex: number | null = null;
   bboxX1:Record<string, any>[] = [];
-  text!: string;
   ngOnInit(): void {
   }
    // On file Select
