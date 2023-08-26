@@ -96,19 +96,26 @@ highlightText(index: number) {
           const words = this.recognizedText[i].words;
           let elemenst:any[] = [];
           let splittedInput = inputText.split(' ');
-          words.forEach((element:any) => {
+          let inputCursor = 0;
 
-            splittedInput.forEach((input:any) => {
-              if(input == element['text']){
-
-                let obj = {
-                  text: element['text'],
-                  bbox: element['bbox']
-                }
-                 elemenst.push(obj);
-              }
-            });
+          words.forEach((element: any) => {
+        
+            if (inputCursor >= splittedInput.length) {
+              return;
+            }
           
+     
+            if (element['text'] === splittedInput[inputCursor]) {
+        
+              let obj = {
+                text: element['text'],
+                bbox: element['bbox'],
+              };
+              elemenst.push(obj);
+          
+             
+              inputCursor++;
+            }
           });
           this.fontSize = words[0].font_size;
           const bbox = this.recognizedText[i].bbox;
