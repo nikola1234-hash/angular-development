@@ -5,3 +5,6 @@ canvas {
     top: 0;
     left: 0;
   }
+  .ocr_par{
+    word-break: break-all;
+  }

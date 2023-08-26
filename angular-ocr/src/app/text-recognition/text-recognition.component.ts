@@ -6,6 +6,7 @@ import * as Tesseract from 'tesseract.js';
   templateUrl: './text-recognition.component.html',
   styleUrls: ['./text-recognition.component.css']
 })
+
 export class TextRecognitionComponent {
   shortLink: string = "";
   loading: boolean = false; // Flag variable
@@ -22,6 +23,7 @@ export class TextRecognitionComponent {
   lastMousePosition: { x: number, y: number } | null = null;
   resizeTargetIndex: number | null = null;
   bboxX1:Record<string, any>[] = [];
+  text!: string;
   ngOnInit(): void {
   }
    // On file Select
@@ -39,11 +41,15 @@ export class TextRecognitionComponent {
 
 }
 
-  getText(){
+async getText(){
     if(this.image){
-      Tesseract.recognize(this.image).then((res:any) =>{
+      var worker = await Tesseract.createWorker();
+      await worker.loadLanguage('eng');
+      await worker.initialize('eng');
+
+      await worker.recognize(this.image).then((res:any) =>{
         console.log(res);
-        
+
         const totalLines = res.data.lines.length;
         this.lines = Array(totalLines).fill('');
         this.recognizedText = res.data.lines.map((line: { text: any; bbox: any; words:any}) => ({
@@ -123,8 +129,8 @@ highlightText(index: number) {
           }
           bbox.x1 = x1;
           const y1 = bbox.y1;
-          this.canvasContext.font = this.fontSize + 'px Arial';
-          this.canvasContext.strokeRect(x0, y0, x1 -x0 , y1 - y0);
+
+          this.canvasContext.strokeRect(x0, y0 , x1 -x0 , y1 - y0);
       }
 
     }

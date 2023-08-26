@@ -6,7 +6,7 @@
                   (change)="onChange($event)">
         </div>
         <div style="position: relative;">
-          <img class="img-thumbnail" #imgElement [src]="imagePath" (load)="onImageLoad($event)">
+          <img #imgElement [src]="imagePath" (load)="onImageLoad($event)">
           <canvas #canvasElement
           (mousedown)="onMouseDown($event)"
           (mousemove)="onMouseMove($event)"
